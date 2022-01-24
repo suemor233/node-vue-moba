@@ -16,6 +16,7 @@
               class="avatar-uploader"
               :action="$http.defaults.baseURL + '/upload'"
               :show-file-list="false"
+                    :headers="getAuthHeaders()"
               :on-success="afterUpload"
             >
               <img v-if="model.avatar" :src="model.avatar" class="avatar" />
@@ -118,6 +119,7 @@
               <el-form-item label="图标">
                 <el-upload
                   class="avatar-uploader"
+                     :headers="getAuthHeaders()"
                   :action="$http.defaults.baseURL + '/upload'"
                   :show-file-list="false"
                   :on-success="(res) => $set(item, 'icon', res.url)"
@@ -158,10 +160,11 @@ export default {
     return {
       categories: [],
       items: [],
-      skills: [],
+  
       model: {
         name: "",
         avatar: "",
+            skills: [],
         scores: {
           difficult: 0,
         },

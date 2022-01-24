@@ -8,9 +8,11 @@
       <el-form-item label="图标">
         <el-upload
           class="avatar-uploader"
+          :headers="getAuthHeaders()"
           :action="$http.defaults.baseURL + '/upload'"
           :show-file-list="false"
           :on-success="afterUpload"
+       
         >
           <img v-if="model.icon" :src="model.icon" class="avatar" />
           <i v-else class="el-icon-plus avatar-uploader-icon"></i>
@@ -25,13 +27,14 @@
 </template>
 
 <script>
+import Vue from 'vue';
 export default {
   props: {
     id: {},
   },
   data() {
     return {
-      model: {},
+      model: {}
     };
   },
   methods: {
@@ -39,6 +42,7 @@ export default {
         this.$set(this.model,'icon',res.url)
         // this.model.icon = res.url
     },
+
     async save() {
       let res;
       if (this.id) {

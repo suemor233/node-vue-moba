@@ -1,5 +1,10 @@
+const auth = require('../../middleware/auth')
+const assert = require('http-assert')
+const jwt = require('jsonwebtoken')
+const AdminUser = require('../../models/AdminUser')
 module.exports = app => {
   const express = require('express')
+
   const router = express.Router({
     mergeParams: true
   })
@@ -36,17 +41,17 @@ module.exports = app => {
     res.send(model)
   })
 
-  app.use('/admin/api/rest/:resource', async (req, res, next) => {
-    const modelName = require('inflection').classify(req.params.resource)
-    req.Model = require(`../../models/${modelName}`)
-    next()
-  }, router)
+  const authMiddleware = require('../../middleware/auth')
+
+  const resourceMiddleware = require('../../middleware/resource')
+
+  app.use('/admin/api/rest/:resource',authMiddleware(), resourceMiddleware(), router)
 
   const multer = require('multer')
   const upload = multer({
     dest: __dirname + '/../../uploads'
   })
-  app.post('/admin/api/upload', upload.single('file'), async (req, res) => {
+  app.post('/admin/api/upload',authMiddleware(), upload.single('file'), async (req, res) => {
     const file = req.file
     file.url = `http://localhost:3000/uploads/${file.filename}`
     res.send(file)
@@ -57,25 +62,26 @@ module.exports = app => {
       username,
       password
     } = req.body
-    const AdminUser = require('../../models/AdminUser')
     const user = await AdminUser.findOne({
       username
     }).select('+password')
-    if (!user) {
-      return res.status(422).send({
-        message: '用户名不存在'
-      })
-    }
+
+    assert(user,422,'用户名不存在')
     const isValid = require('bcrypt').compareSync(password, user.password)
-    if (!isValid) {
-      return res.status(422).send({
-        message: '密码错误'
-      })
-    }
-    const jwt = require('jsonwebtoken')
+    assert(isValid,422,'密码错误')
+
     const token = jwt.sign({
       id: user._id,
-    },app.get('secret'))
-    res.send({token})
+    }, app.get('secret'))
+    res.send({
+      token
+    })
+  })
+
+  app.use(async(err,req,res,next) => {
+    console.log(err);
+    res.status(err.statusCode || 500).send({
+      message:err.message
+    })
   })
 }
